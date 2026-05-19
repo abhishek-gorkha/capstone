@@ -2,6 +2,7 @@ package com.edutech.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -10,9 +11,13 @@ import org.springframework.stereotype.Service;
 
 import com.edutech.exception.ResourceNotFoundException;
 import com.edutech.model.Restaurant;
+import com.edutech.model.RestaurantManagerAssignment;
+import com.edutech.model.User;
 import com.edutech.repository.MenuItemRepository;
 import com.edutech.repository.OrderRepository;
+import com.edutech.repository.RestaurantManagerAssignmentRepository;
 import com.edutech.repository.RestaurantRepository;
+import com.edutech.repository.UserRepository;
 
 // import exception.ResourceNotFoundException;
 
@@ -24,6 +29,11 @@ public class RestaurantServiceImpl implements RestaurantService {
 	private MenuItemRepository menuItemRepository;
 	@Autowired
 	private OrderRepository orderRepository;
+	@Autowired
+	private RestaurantManagerAssignmentRepository assignmentRepository;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	@Override
 	public Restaurant createRestaurant(Restaurant restaurant) {
@@ -56,10 +66,6 @@ public class RestaurantServiceImpl implements RestaurantService {
 
 	}
 
-	// @Override
-	// public void deleteRestaurant(long id) {
-	// restaurantRepository.deleteById(id);
-	// }
 	@Override
 @Transactional
 public void deleteRestaurant(long id) {
@@ -82,5 +88,20 @@ public void deleteRestaurant(long id) {
     // ✅ Step 5: delete restaurant
     restaurantRepository.delete(restaurant);
 }
+@Override
+	public List<Restaurant> getRestaurantsForManager(String username) {
+
+		// user nikal username se (JWT se aaya hoga)
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new RuntimeException("User not found"));
+
+		// assignments nikal
+		List<RestaurantManagerAssignment> assignments = assignmentRepository.findByUser_Id(user.getId());
+
+		// restaurants extract kar
+		return assignments.stream()
+        .map(RestaurantManagerAssignment::getRestaurant)
+        .collect(Collectors.toList());
+	}
 
 }

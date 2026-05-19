@@ -87,7 +87,12 @@ addMenuItem(data: any): Observable<any> {
       this.getHeaders()
     );
   }
-  
+  getMyMenuItems(): Observable<MenuItem[]> {
+    return this.http.get<MenuItem[]>(
+      `${this.apiUrl}/my`,
+      this.getHeaders()
+    );
+  }
 
 }
 

@@ -1,5 +1,6 @@
 package com.edutech.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,7 @@ public interface RestaurantManagerAssignmentRepository extends JpaRepository<Res
 	Optional<RestaurantManagerAssignment> findByRestaurantId(Long restaurantId);
 
 	Optional<RestaurantManagerAssignment> findByManagerId(Long managerId);
+
+	List<RestaurantManagerAssignment> findByUser_Id(Long userId);
+
 }

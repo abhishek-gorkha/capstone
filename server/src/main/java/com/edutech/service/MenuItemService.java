@@ -12,4 +12,5 @@ public interface MenuItemService {
 	public MenuItem updateMenuItem(Long id, MenuItem item);
 	public void deleteMenuItem(Long id);
 	List<MenuItem> getMenuItemsByRestaurant(Long restaurantId);
+	List<MenuItem> getMenuItemsForManager(String username);
 }

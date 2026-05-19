@@ -150,7 +150,41 @@ export class OrderComponent implements OnInit {
 
         });
 
-    } else {
+    } else if (this.authService.isManager()) {
+
+  this.orderService
+    .getMyOrders()   // ✅ sirf assigned restaurants ke orders
+    .subscribe({
+
+      next: (data: any) => {
+
+        if (Array.isArray(data)) {
+          this.orders = data;
+        } else if (Array.isArray(data?.data)) {
+          this.orders = data.data;
+        } else if (Array.isArray(data?.content)) {
+          this.orders = data.content;
+        } else if (Array.isArray(data?.orders)) {
+          this.orders = data.orders;
+        } else {
+          this.orders = [];
+        }
+
+        this.currentPage = 1;
+      },
+
+      error: (err) => {
+        this.orders = [];
+        this.error =
+          err.error?.error ||
+          err.error?.message ||
+          'Failed to load orders';
+      }
+
+    });
+
+  }
+    else {
 
       this.orderService
         .getAllOrders()

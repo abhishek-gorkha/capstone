@@ -13,6 +13,7 @@ import com.edutech.dto.OrderRequest;
 import com.edutech.dto.OrderResponseDTO;
 import com.edutech.model.Order;
 import com.edutech.service.OrderService;
+import com.edutech.util.JwtUtil;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -20,6 +21,19 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+     @Autowired
+        private JwtUtil jwtUtil;
+
+
+@GetMapping("/my")
+        public ResponseEntity<?> getMyOrders(@RequestHeader("Authorization") String header) {
+
+                String token = header.replace("Bearer ", "");
+                String username = jwtUtil.extractUsername(token);
+
+                return ResponseEntity.ok(
+                                orderService.getOrdersForManager(username));
+        }
 
     // =========================
     // PLACE ORDER
@@ -46,6 +60,7 @@ public class OrderController {
             );
         }
     }
+    
 
     // =========================
     // GET ALL ORDERS

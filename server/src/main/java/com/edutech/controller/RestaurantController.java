@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.edutech.model.Restaurant;
 import com.edutech.service.RestaurantService;
 import com.edutech.service.UserService;
+import com.edutech.util.JwtUtil;
 
 @RestController
 @RequestMapping("/api/restaurants")
@@ -21,9 +22,29 @@ public class RestaurantController {
 
    private UserService userService;
 
+   @Autowired
+   private JwtUtil jwtUtil;
+   
    public RestaurantController(UserService userService) {
       this.userService = userService;
    }
+
+   @GetMapping("/my")
+   public ResponseEntity<?> getMyRestaurants(@RequestHeader("Authorization") String token) {
+
+      String username = extractUsernameFromToken(token);
+
+      return ResponseEntity.ok(
+            restaurantService.getRestaurantsForManager(username));
+   }
+
+   private String extractUsernameFromToken(String header) {
+
+      String token = header.replace("Bearer ", "");
+      return jwtUtil.extractUsername(token);
+   }
+
+   
 
    @PostMapping
    public ResponseEntity<Restaurant> createRestaurant(@RequestBody Restaurant restaurant) {

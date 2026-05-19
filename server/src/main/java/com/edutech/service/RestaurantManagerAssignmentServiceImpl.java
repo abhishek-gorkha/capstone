@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.edutech.dto.RestaurantManagerAssignmentDTO;
+import com.edutech.exception.DuplicateResourceException;
+import com.edutech.exception.ResourceNotFoundException;
 // import com.edutech.exception.DuplicateAssignmentException;
 // import com.edutech.exception.ResourceNotFoundException;
 import com.edutech.model.Restaurant;
@@ -33,13 +35,13 @@ public class RestaurantManagerAssignmentServiceImpl implements RestaurantManager
 	@Override
 	public RestaurantManagerAssignmentDTO assignManager(Long restaurantId, Long managerId) {
 		if (assignmentRepository.existsByRestaurantId(restaurantId)) {
-			throw new RuntimeException("Restaurant already has an assigned manager");
+			throw new DuplicateResourceException("Restaurant already has an assigned manager");
 		}
 
 		Restaurant restaurant = restaurantRepository.findById(restaurantId)
-				.orElseThrow(() -> new RuntimeException("Restaurant not found: " + restaurantId));
+				.orElseThrow(() -> new ResourceNotFoundException("Restaurant not found: " + restaurantId));
 		User user = userRepository.findById(managerId)
-				.orElseThrow(() -> new RuntimeException("User not found: " + managerId));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found: " + managerId));
 
 		if (user.getRole() != Role.MANAGER) {
 			throw new IllegalArgumentException("User is not a manager");
@@ -64,7 +66,7 @@ public class RestaurantManagerAssignmentServiceImpl implements RestaurantManager
 	@Override
 	public RestaurantManagerAssignmentDTO getAssignmentByRestaurantId(Long restaurantId) {
 		RestaurantManagerAssignment assignment = assignmentRepository.findByRestaurantId(restaurantId)
-				.orElseThrow(() -> new RuntimeException(
+				.orElseThrow(() -> new ResourceNotFoundException(
 						"Assignment not found for restaurant: " + restaurantId));
 		return toDto(assignment);
 	}

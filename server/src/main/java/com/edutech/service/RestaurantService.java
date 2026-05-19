@@ -12,5 +12,6 @@ public interface RestaurantService{
     public Optional<Restaurant> getRestaurantById(Long id);
     public Restaurant updateRestaurant(long id, Restaurant restaurant);
     public void deleteRestaurant(long id);
+    List<Restaurant> getRestaurantsForManager(String username);
 	
 }

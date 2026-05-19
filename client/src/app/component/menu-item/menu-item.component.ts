@@ -34,8 +34,14 @@ export class MenuItemComponent implements OnInit {
       quantity: ['', [Validators.required, Validators.min(1)]],
       restaurantId: ['', Validators.required]
     });
-    this.menuItemService.getAllMenuItems().subscribe({ next: d => this.menuItems = d });
-    this.restaurantService.getAll().subscribe({ next: d => this.restaurants = d });
+    // this.menuItemService.getAllMenuItems().subscribe({ next: d => this.menuItems = d });
+    this.menuItemService.getMyMenuItems().subscribe({
+      next: d => this.menuItems = d
+    });
+    // this.restaurantService.getAll().subscribe({ next: d => this.restaurants = d });
+    this.restaurantService.getMyRestaurants().subscribe({
+      next: d => this.restaurants = d
+    });
   }
 
   openAdd(): void { this.isEditing = false; this.selectedItem = null; this.menuForm.reset({ menuType: 'Veg' }); this.showForm = true; this.message = ''; this.error = ''; }

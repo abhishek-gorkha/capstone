@@ -1,17 +1,22 @@
 package com.edutech.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.edutech.dto.OrderRequest;
+import com.edutech.exception.BadRequestException;
+import com.edutech.exception.ResourceNotFoundException;
 import com.edutech.model.MenuItem;
 import com.edutech.model.Order;
 import com.edutech.model.Restaurant;
+import com.edutech.model.RestaurantManagerAssignment;
 import com.edutech.model.User;
 import com.edutech.repository.MenuItemRepository;
 import com.edutech.repository.OrderRepository;
+import com.edutech.repository.RestaurantManagerAssignmentRepository;
 import com.edutech.repository.RestaurantRepository;
 import com.edutech.repository.UserRepository;
 
@@ -30,39 +35,60 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private RestaurantRepository restaurantRepository;
 
+     @Autowired
+    private RestaurantManagerAssignmentRepository assignmentRepository;
+
+ 
+ 
+ @Override
+    public List<Order> getOrdersForManager(String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<RestaurantManagerAssignment> assignments = assignmentRepository.findByUser_Id(user.getId());
+
+        List<Long> restaurantIds = assignments.stream()
+                .map(a -> a.getRestaurant().getId())
+                .collect(Collectors.toList());
+
+        return orderRepository.findByRestaurant_IdIn(restaurantIds);
+
+    }
+
     @Override
     public Order createOrder(OrderRequest request) {
 
         if (request.getCustomerName() == null || request.getCustomerName().trim().isEmpty()) {
-            throw new RuntimeException("Customer name is required");
+            throw new BadRequestException("Customer name is required");
         }
 
         if (request.getRestaurantId() == null) {
-            throw new RuntimeException("Restaurant id is required");
+            throw new BadRequestException("Restaurant id is required");
         }
 
         if (request.getUserId() == null) {
-            throw new RuntimeException("User id is required");
+            throw new BadRequestException("User id is required");
         }
 
         if (request.getItemIds() == null || request.getItemIds().isEmpty()) {
-            throw new RuntimeException("At least one menu item is required");
+            throw new BadRequestException("At least one menu item is required");
         }
 
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Restaurant not found with id: " + request.getRestaurantId()
                 ));
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + request.getUserId()
                 ));
 
         List<MenuItem> items = menuItemRepository.findAllById(request.getItemIds());
 
         if (items == null || items.isEmpty()) {
-            throw new RuntimeException("No menu items found");
+            throw new ResourceNotFoundException("No menu items found");
         }
 
         Double totalAmount = calculateTotal(items);
@@ -106,7 +132,7 @@ public class OrderServiceImpl implements OrderService {
                 ));
 
         if ("DELIVERED".equalsIgnoreCase(order.getStatus())) {
-            throw new RuntimeException("Delivered order cannot be cancelled");
+            throw new BadRequestException("Delivered order cannot be cancelled");
         }
 
         order.setStatus("CANCELLED");
@@ -129,11 +155,11 @@ public class OrderServiceImpl implements OrderService {
     public void updateOrderStatus(Long id, String status) {
 
         if (status == null || status.trim().isEmpty()) {
-            throw new RuntimeException("Status is required");
+            throw new BadRequestException("Status is required");
         }
 
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Order not found with id: " + id
                 ));
 
@@ -143,7 +169,7 @@ public class OrderServiceImpl implements OrderService {
                 && !updatedStatus.equals("PROCESSING")
                 && !updatedStatus.equals("DELIVERED")
                 && !updatedStatus.equals("CANCELLED")) {
-            throw new RuntimeException("Invalid order status: " + status);
+            throw new BadRequestException("Invalid order status: " + status);
         }
 
         order.setStatus(updatedStatus);

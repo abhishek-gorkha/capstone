@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import com.edutech.model.MenuItem;
 import com.edutech.repository.RestaurantRepository;
 import com.edutech.service.MenuItemService;
+import com.edutech.util.JwtUtil;
 
 import java.util.List;
 
@@ -19,6 +20,18 @@ public class MenuItemController {
     private MenuItemService service;
     @Autowired
     private RestaurantRepository restaurantRepository;
+     @Autowired
+    private JwtUtil jwtUtil;
+
+@GetMapping("/my")
+    public ResponseEntity<?> getMyMenuItems(@RequestHeader("Authorization") String header) {
+
+        String token = header.replace("Bearer ", "");
+        String username = jwtUtil.extractUsername(token);
+
+        return ResponseEntity.ok(
+                service.getMenuItemsForManager(username));
+    }
 
     @PostMapping
 public ResponseEntity<?> createMenuItem(@RequestBody MenuItem item) {

@@ -26,9 +26,52 @@ export class DashboardComponent implements OnInit {
   feedback: any[] = [];
   menuItems: any[] = [];
   assignments: any[] = [];
-
-  // ✅ NEW: Customers
   customers: User[] = [];
+
+  featuredDishes = [
+    {
+      name: 'Truffle Pasta',
+      desc: 'Handmade pasta with black truffle & parmesan',
+      img: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=600&q=80',
+      tag: 'Chef\'s Pick',
+      rating: 4.9
+    },
+    {
+      name: 'Wagyu Steak',
+      desc: 'A5 Japanese beef, 200g, herb butter',
+      img: 'https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80',
+      tag: 'Premium',
+      rating: 4.8
+    },
+    {
+      name: 'Grilled Salmon',
+      desc: 'Atlantic salmon, citrus glaze, micro herbs',
+      img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80',
+      tag: 'Healthy',
+      rating: 4.7
+    },
+    {
+      name: 'Artisan Pizza',
+      desc: 'Wood-fired, San Marzano tomatoes, buffalo mozzarella',
+      img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80',
+      tag: 'Bestseller',
+      rating: 4.9
+    },
+    {
+      name: 'Fresh Sushi',
+      desc: 'Chef\'s 12-piece omakase platter',
+      img: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=600&q=80',
+      tag: 'Japanese',
+      rating: 4.8
+    },
+    {
+      name: 'Lava Chocolate Cake',
+      desc: 'Warm molten centre, vanilla bean ice cream',
+      img: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&q=80',
+      tag: 'Dessert',
+      rating: 5.0
+    }
+  ];
 
   constructor(
     private router: Router,
@@ -66,7 +109,6 @@ export class DashboardComponent implements OnInit {
 
       if (token) {
         const decoded = this.decodeJwt(token);
-
         if (decoded) {
           const jwtRole =
             decoded['role'] ||
@@ -97,16 +139,9 @@ export class DashboardComponent implements OnInit {
 
   private normalizeRole(raw: string): string {
     if (!raw) return 'CUSTOMER';
-
     const upper = String(raw).trim().toUpperCase();
-    const stripped = upper.startsWith('ROLE_')
-      ? upper.replace('ROLE_', '')
-      : upper;
-
-    if (['ADMIN', 'MANAGER', 'CUSTOMER'].includes(stripped)) {
-      return stripped;
-    }
-
+    const stripped = upper.startsWith('ROLE_') ? upper.replace('ROLE_', '') : upper;
+    if (['ADMIN', 'MANAGER', 'CUSTOMER'].includes(stripped)) return stripped;
     return 'CUSTOMER';
   }
 
@@ -126,13 +161,12 @@ export class DashboardComponent implements OnInit {
     } else if (this.isManager()) {
       this.activeTab = 'manager-overview';
     } else {
-      this.activeTab = 'customer-order';
+      this.activeTab = 'customer-home';
     }
   }
 
   private setCurrentDate(): void {
     const now = new Date();
-
     this.currentDate = now.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -144,139 +178,70 @@ export class DashboardComponent implements OnInit {
   private loadDashboardData(): void {
     if (this.isAdmin() || this.isManager()) {
       this.restaurantService.getAll().subscribe({
-        next: (data: any[]) => {
-          this.restaurants = data || [];
-        },
-        error: (err: any) => {
-          console.error('RestaurantService error:', err);
-          this.restaurants = [];
-        }
+        next: (data: any[]) => { this.restaurants = data || []; },
+        error: () => { this.restaurants = []; }
       });
 
-      // ✅ NEW: Load customers for Admin and Manager
       this.loadCustomers();
 
       if (this.isAdmin()) {
         this.restaurantService.getAssignments().subscribe({
-          next: (data: any[]) => {
-            this.assignments = data || [];
-          },
-          error: (err: any) => {
-            console.error('Assignments error:', err);
-            this.assignments = [];
-          }
+          next: (data: any[]) => { this.assignments = data || []; },
+          error: () => { this.assignments = []; }
         });
       }
     }
 
     this.orderService.getAllOrders().subscribe({
-      next: (data: any[]) => {
-        this.orders = data || [];
-      },
-      error: (err: any) => {
-        console.error('OrderService error:', err);
-        this.orders = [];
-      }
+      next: (data: any[]) => { this.orders = data || []; },
+      error: () => { this.orders = []; }
     });
 
     if (this.isAdmin() || this.isManager()) {
       this.feedbackService.getAllFeedbacks().subscribe({
-        next: (data: any[]) => {
-          this.feedback = data || [];
-        },
-        error: (err: any) => {
-          console.error('FeedbackService error:', err);
-          this.feedback = [];
-        }
+        next: (data: any[]) => { this.feedback = data || []; },
+        error: () => { this.feedback = []; }
       });
     }
 
     if (this.isManager()) {
       this.menuItemService.getAll().subscribe({
-        next: (data: any[]) => {
-          this.menuItems = data || [];
-        },
-        error: (err: any) => {
-          console.error('MenuItemService error:', err);
-          this.menuItems = [];
-        }
+        next: (data: any[]) => { this.menuItems = data || []; },
+        error: () => { this.menuItems = []; }
       });
     }
   }
 
-  // ✅ NEW: Load only customer users
   private loadCustomers(): void {
-  this.restaurantService.getUserDetails().subscribe({
-    next: (data: User[]) => {
-      console.log('All users from backend:', data);
-
-      this.customers = data.filter((user: User) => {
-        const role = String(user.role || '')
-          .trim()
-          .toUpperCase()
-          .replace('ROLE_', '');
-
-        return role === 'CUSTOMER';
-      });
-
-      console.log('Filtered customers:', this.customers);
-    },
-    error: (err: any) => {
-      console.error('Customer loading error:', err);
-      this.customers = [];
-    }
-  });
-}
-
-  isAdmin(): boolean {
-    return this.currentRole === 'ADMIN';
+    this.restaurantService.getUserDetails().subscribe({
+      next: (data: User[]) => {
+        this.customers = data.filter((user: User) => {
+          const role = String(user.role || '').trim().toUpperCase().replace('ROLE_', '');
+          return role === 'CUSTOMER';
+        });
+      },
+      error: () => { this.customers = []; }
+    });
   }
 
-  isManager(): boolean {
-    return this.currentRole === 'MANAGER';
-  }
+  isAdmin(): boolean { return this.currentRole === 'ADMIN'; }
+  isManager(): boolean { return this.currentRole === 'MANAGER'; }
+  isCustomer(): boolean { return this.currentRole === 'CUSTOMER'; }
 
-  isCustomer(): boolean {
-    return this.currentRole === 'CUSTOMER';
-  }
-
-  setTab(tab: string): void {
-    this.activeTab = tab;
-  }
-
-  toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-  }
+  setTab(tab: string): void { this.activeTab = tab; }
+  toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
 
   logout(): void {
     localStorage.clear();
     this.router.navigate(['/login']);
   }
 
-  goToRestaurant(): void {
-    this.router.navigate(['/restaurant']);
-  }
-
-  goToAssignManager(): void {
-    this.router.navigate(['/assign-manager']);
-  }
-
-  goToMenuItems(): void {
-    this.router.navigate(['/menu-item']);
-  }
-
-  goToOrders(): void {
-    this.router.navigate(['/order']);
-  }
-
-  goToFeedback(): void {
-    this.router.navigate(['/feedback']);
-  }
-
-  // ✅ Optional route if you have separate Customer Details page
-  goToCustomers(): void {
-    this.activeTab = 'manager-customers';
-  }
+  goToRestaurant(): void { this.router.navigate(['/restaurant']); }
+  goToAssignManager(): void { this.router.navigate(['/assign-manager']); }
+  goToMenuItems(): void { this.router.navigate(['/menu-item']); }
+  goToOrders(): void { this.router.navigate(['/order']); }
+  goToFeedback(): void { this.router.navigate(['/feedback']); }
+  goToCustomers(): void { this.activeTab = 'manager-customers'; }
 
   get userInitial(): string {
     return this.username ? this.username.charAt(0).toUpperCase() : 'U';
@@ -284,14 +249,10 @@ export class DashboardComponent implements OnInit {
 
   get roleBadgeLabel(): string {
     switch (this.currentRole) {
-      case 'ADMIN':
-        return 'Administrator';
-      case 'MANAGER':
-        return 'Manager';
-      case 'CUSTOMER':
-        return 'Customer';
-      default:
-        return this.currentRole;
+      case 'ADMIN': return 'Administrator';
+      case 'MANAGER': return 'Manager';
+      case 'CUSTOMER': return 'Customer';
+      default: return this.currentRole;
     }
   }
 
@@ -301,72 +262,35 @@ export class DashboardComponent implements OnInit {
     return 'Let Me Dine';
   }
 
-  get recentRestaurants(): any[] {
-    return this.restaurants.slice(0, 5);
-  }
-
-  get recentOrders(): any[] {
-    return this.orders.slice(0, 5);
-  }
-
-  get recentFeedback(): any[] {
-    return this.feedback.slice(0, 5);
-  }
-
-  get recentMenuItems(): any[] {
-    return this.menuItems.slice(0, 5);
-  }
-
-  // ✅ NEW
-  get recentCustomers(): User[] {
-    return this.customers.slice(0, 5);
-  }
+  get recentRestaurants(): any[] { return this.restaurants.slice(0, 5); }
+  get recentOrders(): any[] { return this.orders.slice(0, 5); }
+  get recentFeedback(): any[] { return this.feedback.slice(0, 5); }
+  get recentMenuItems(): any[] { return this.menuItems.slice(0, 5); }
+  get recentCustomers(): User[] { return this.customers.slice(0, 5); }
 
   get pendingOrdersCount(): number {
-    return this.orders.filter(
-      o => o.status?.toUpperCase() === 'PENDING'
-    ).length;
+    return this.orders.filter(o => o.status?.toUpperCase() === 'PENDING').length;
   }
-
   get processingOrdersCount(): number {
-    return this.orders.filter(
-      o => o.status?.toUpperCase() === 'PROCESSING'
-    ).length;
+    return this.orders.filter(o => o.status?.toUpperCase() === 'PROCESSING').length;
   }
-
   get deliveredOrdersCount(): number {
-    return this.orders.filter(
-      o => o.status?.toUpperCase() === 'DELIVERED'
-    ).length;
+    return this.orders.filter(o => o.status?.toUpperCase() === 'DELIVERED').length;
   }
-
   get cancelledOrdersCount(): number {
-    return this.orders.filter(
-      o => o.status?.toUpperCase() === 'CANCELLED'
-    ).length;
+    return this.orders.filter(o => o.status?.toUpperCase() === 'CANCELLED').length;
   }
 
   get pendingOrdersPercent(): number {
-    return this.orders.length
-      ? Math.round((this.pendingOrdersCount / this.orders.length) * 100)
-      : 0;
+    return this.orders.length ? Math.round((this.pendingOrdersCount / this.orders.length) * 100) : 0;
   }
-
   get processingOrdersPercent(): number {
-    return this.orders.length
-      ? Math.round((this.processingOrdersCount / this.orders.length) * 100)
-      : 0;
+    return this.orders.length ? Math.round((this.processingOrdersCount / this.orders.length) * 100) : 0;
   }
-
   get deliveredOrdersPercent(): number {
-    return this.orders.length
-      ? Math.round((this.deliveredOrdersCount / this.orders.length) * 100)
-      : 0;
+    return this.orders.length ? Math.round((this.deliveredOrdersCount / this.orders.length) * 100) : 0;
   }
-
   get cancelledOrdersPercent(): number {
-    return this.orders.length
-      ? Math.round((this.cancelledOrdersCount / this.orders.length) * 100)
-      : 0;
+    return this.orders.length ? Math.round((this.cancelledOrdersCount / this.orders.length) * 100) : 0;
   }
 }

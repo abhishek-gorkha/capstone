@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.edutech.exception.ResourceNotFoundException;
 import com.edutech.model.Feedback;
 import com.edutech.repository.FeedbackRepository;
 
@@ -38,7 +39,7 @@ public class FeedbackServiceImpl implements FeedbackService{
     public Feedback replyToFeedback(Long id, String response) {
 
         Feedback feedback = feedbackRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Feedback not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Feedback not found with id: " + id));
 
         feedback.setResponse(response);
 

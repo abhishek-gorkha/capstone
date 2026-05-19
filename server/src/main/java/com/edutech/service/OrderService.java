@@ -15,5 +15,7 @@ public interface OrderService {
 	public void cancelOrder(Long id);
 	public Double calculateTotal(List<MenuItem> items);
 	public void updateOrderStatus(Long id, String status);
+	List<Order> getOrdersForManager(String username);
+
 
 }

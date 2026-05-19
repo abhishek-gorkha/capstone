@@ -1,6 +1,7 @@
 package com.edutech.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -9,13 +10,22 @@ import org.springframework.stereotype.Service;
 
 import com.edutech.exception.ResourceNotFoundException;
 import com.edutech.model.MenuItem;
+import com.edutech.model.RestaurantManagerAssignment;
+import com.edutech.model.User;
 import com.edutech.repository.MenuItemRepository;
+import com.edutech.repository.RestaurantManagerAssignmentRepository;
+import com.edutech.repository.UserRepository;
 
 @Service
 public class MenuItemServiceImpl implements MenuItemService {
 
     @Autowired
     private MenuItemRepository repository;
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RestaurantManagerAssignmentRepository assignmentRepository;
 
     @Override
     public MenuItem addMenuItem(MenuItem item) {
@@ -64,6 +74,23 @@ public void deleteMenuItem(Long id) {
 public List<MenuItem> getMenuItemsByRestaurant(Long restaurantId) {
     return repository.findByRestaurantId(restaurantId);
 }
+@Override
+    public List<MenuItem> getMenuItemsForManager(String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // get assigned restaurants
+        List<RestaurantManagerAssignment> assignments = assignmentRepository.findByUser_Id(user.getId());
+
+        List<Long> restaurantIds = assignments.stream()
+                .map(a -> a.getRestaurant().getId())
+                .collect(Collectors.toList());
+
+        // fetch menu items of only those restaurants
+        return repository.findByRestaurant_IdIn(restaurantIds);
+
+    }
 
 }
 

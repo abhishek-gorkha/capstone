@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.edutech.exception.ResourceNotFoundException;
 import com.edutech.model.User;
 import com.edutech.repository.UserRepository;
 
@@ -39,7 +40,7 @@ public class UserService implements UserDetailsService {
     public User getUserByUsername(String username) {
 
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with username: " + username));
     }
 
@@ -50,15 +51,15 @@ public class UserService implements UserDetailsService {
     public User getUserProfile(Long userId) {
 
         return userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + userId));
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username){
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with username: " + username));
 
         return new org.springframework.security.core.userdetails.User(
@@ -91,41 +92,8 @@ public class UserService implements UserDetailsService {
         return user.getResetTokenExpiry().isAfter(LocalDateTime.now());
     }
 
-    // public boolean updatePassword(
-    //         String token,
-    //         String newPassword) {
+     public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
 
-    //     User user = userRepository
-    //             .findByResetToken(token)
-    //             .orElse(null);
-
-    //     if (user == null) {
-    //         return false;
-    //     }
-
-    //     if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
-
-    //         return false;
-    //     }
-
-    //     user.setPassword(
-    //             passwordEncoder.encode(newPassword));
-
-    //     // Clear token after password reset
-    //     user.setResetToken(null);
-
-    //     user.setResetTokenExpiry(null);
-
-    //     userRepository.save(user);
-
-    //     return true;
-    // }
-
-    // public User getUserByEmail(String email) {
-    //     return userRepository.findByEmail(email).orElse(null);
-    // }
-
-    // public User getUserByResetToken(String token) {
-    //     return userRepository.findByResetToken(token).orElse(null);
-    // }
 }

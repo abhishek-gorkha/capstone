@@ -105,5 +105,11 @@ getAllAssignments(): Observable<RestaurantManagerAssignmentDTO[]> {
     this.getHeaders()
   );
 }
+getMyRestaurants(): Observable<Restaurant[]> {
+  return this.http.get<Restaurant[]>(
+    `${this.apiUrl}/my`,
+    this.getHeaders()
+  );
+}
 
 }
